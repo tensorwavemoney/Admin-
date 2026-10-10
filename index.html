@@ -1,0 +1,1663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>T-WAVE Admin — Support</title>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+
+<style>
+
+*{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:#05080d;
+  --panel:#0d131c;
+  --text:#e9f7ff;
+  --muted:#8ba0b3;
+  --cyan:#00d9ff;
+  --blue:#168cff;
+  --gold:#d4af37;
+  --border:#1c3042;
+  --danger:#ef4444;
+}
+
+html,body{height:100%}
+
+body{
+  background:radial-gradient(circle at top,#071b2a 0%,#05080d 45%,#020406 100%);
+  color:var(--text);
+  font-family:Arial,Helvetica,sans-serif;
+  overflow:hidden;
+}
+
+button,input,textarea{font-family:inherit}
+button{cursor:pointer}
+
+/* ================= LOADING ================= */
+
+.loading{
+  position:fixed;inset:0;z-index:300;display:none;align-items:center;justify-content:center;
+  background:#03070b;color:#a8eaff;font-size:13px;
+}
+.spinner{
+  width:25px;height:25px;border:3px solid #183243;border-top-color:var(--cyan);
+  border-radius:50%;animation:spin .8s linear infinite;margin-right:10px;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ================= LOGIN ================= */
+
+#loginPage{
+  min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;
+}
+
+.loginBrand{width:100%;max-width:400px;margin-bottom:24px;text-align:center}
+.tensor{font-size:20px;font-weight:900;letter-spacing:3px;color:#e9f7ff;text-shadow:0 0 18px rgba(0,217,255,.45);margin-bottom:16px}
+.waveLogo{
+  width:66px;height:66px;margin:0 auto 12px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:34px;background:linear-gradient(145deg,#061a2a,#0c314b);border:1px solid #176b91;box-shadow:0 0 26px rgba(0,217,255,.18);
+}
+.loginTitle{font-size:22px;font-weight:800;letter-spacing:1.5px;color:#fff}
+.loginSub{color:var(--muted);font-size:12.5px;margin-top:5px}
+
+.loginBox{
+  width:100%;max-width:400px;background:rgba(13,19,28,.96);border:1px solid #18384d;border-radius:22px;
+  padding:26px 20px;box-shadow:0 0 50px rgba(0,217,255,.08),0 20px 80px rgba(0,0,0,.5);
+}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12.5px;color:#a9bfce;margin-bottom:6px}
+.field input{
+  width:100%;height:48px;border-radius:11px;border:1px solid #244052;background:#080e15;color:#fff;
+  padding:0 13px;outline:none;font-size:14px;
+}
+.field input:focus{border-color:var(--cyan)}
+
+.primaryBtn{
+  width:100%;min-height:49px;border:0;border-radius:12px;color:#001018;font-weight:800;
+  background:linear-gradient(135deg,#00e5ff,#168cff);box-shadow:0 8px 25px rgba(0,153,255,.2);font-size:14px;
+}
+.primaryBtn:active{transform:scale(.98)}
+.primaryBtn:disabled{opacity:.55}
+
+.loginStatus{text-align:center;min-height:18px;margin-top:12px;font-size:12px;color:#ffb4b4}
+
+/* ================= ADMIN SHELL ================= */
+
+#adminPage{display:none;height:100vh;flex-direction:column}
+
+.adminTop{
+  flex:0 0 auto;height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;
+  background:rgba(5,8,13,.92);border-bottom:1px solid #162735;
+}
+.adminBrand{font-size:16px;font-weight:900;letter-spacing:.5px}
+.adminBrand span{color:var(--cyan)}
+.signOutBtn{
+  padding:8px 13px;border-radius:9px;border:1px solid #5a2929;background:#180d0d;color:#ffbaba;
+  font-weight:700;font-size:11.5px;
+}
+
+.adminBody{flex:1 1 auto;display:flex;min-height:0}
+
+/* ---- tabs (chats / referrals) ---- */
+
+.adminTabs{
+  flex:0 0 auto;display:flex;gap:8px;padding:10px 16px;background:#070c12;border-bottom:1px solid #142430;
+}
+.adminTabBtn{
+  flex:0 0 auto;padding:8px 13px;border-radius:9px;border:1px solid #1c2f3d;background:#0b141c;
+  color:#7f96a8;font-weight:800;font-size:12px;
+}
+.adminTabBtn.active{background:rgba(0,217,255,.12);border-color:#1d6b82;color:#8bdcff}
+
+/* ---- referrals page ---- */
+
+.referralsPage{flex:1 1 auto;overflow-y:auto;min-height:0;background:#070c12}
+.refHead{padding:16px 16px 8px}
+.refHead h1{font-size:15px;font-weight:800;color:#dff9ff}
+.refHead p{font-size:11.5px;color:#5f7889;margin-top:4px;line-height:1.5}
+.refList{padding:6px 12px 20px;display:flex;flex-direction:column;gap:10px}
+.refItem{
+  border:1px solid #16293a;border-radius:14px;padding:12px 13px;background:#0a141d;
+}
+.refTop{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.refNewUser{font-size:13.5px;font-weight:800;color:#eef8ff}
+.refPhone{font-size:11px;color:#5f7a8c;margin-top:2px}
+.refBadge{
+  flex:0 0 auto;font-size:9.5px;font-weight:800;padding:4px 8px;border-radius:999px;letter-spacing:.3px;
+}
+.refBadge.pending{background:rgba(251,191,36,.12);color:#ffe28a;border:1px solid #4a3a10}
+.refBadge.rewarded{background:rgba(78,231,138,.12);color:#4ee78a;border:1px solid #245d47}
+.refBadge.rejected{background:rgba(239,68,68,.12);color:#ff8f8f;border:1px solid #5a2929}
+.refCodeRow{margin-top:9px;font-size:12px;color:#9fd8ff}
+.refCodeRow b{color:#ffe28a}
+.refActions{display:flex;gap:8px;margin-top:11px}
+.refApproveBtn,.refRejectBtn{
+  flex:1 1 auto;height:36px;border-radius:9px;font-size:12px;font-weight:800;border:1px solid transparent;
+}
+.refApproveBtn{background:rgba(78,231,138,.14);color:#4ee78a;border-color:#245d47}
+.refRejectBtn{background:rgba(239,68,68,.10);color:#ff8f8f;border-color:#5a2929}
+.refApproveBtn:disabled,.refRejectBtn:disabled{opacity:.5}
+.refNote{margin-top:8px;font-size:11px;color:#5f7a8c}
+
+/* ---- payment tab ---- */
+
+.payForm{padding:6px 16px 20px}
+.payCurrent{
+  background:#0a141d;border:1px solid #16293a;border-radius:12px;padding:12px 13px;margin-bottom:16px;
+  font-size:12.5px;color:#9fd8ff;line-height:1.7;
+}
+.payCurrent b{color:#eef8ff}
+.payField{margin-bottom:14px}
+.payField label{display:block;font-size:12px;color:#7f96a8;margin-bottom:6px}
+.payField input{
+  width:100%;height:44px;border-radius:10px;border:1px solid #22384a;background:#050b12;
+  color:#fff;padding:0 12px;outline:none;font-size:13.5px;
+}
+.payField input:focus{border-color:#00d9ff}
+.payMsg{font-size:12.5px;margin-top:10px;min-height:16px}
+.payMsg.err{color:#ff8f8f}
+.payMsg.ok{color:#4ee78a}
+
+/* ---- sidebar (chat list) ---- */
+
+.sidebar{
+  width:100%;max-width:100%;display:flex;flex-direction:column;border-right:1px solid #142430;background:#070c12;min-height:0;
+}
+.sidebarHead{padding:14px 16px 10px;flex:0 0 auto}
+.sidebarHead h1{font-size:15px;font-weight:800;color:#dff9ff}
+.sidebarHead p{font-size:11px;color:#5f7889;margin-top:3px}
+
+.chatList{flex:1 1 auto;overflow-y:auto;padding:4px 8px 14px}
+.chatItem{
+  display:flex;align-items:center;gap:11px;padding:11px 9px;border-radius:13px;cursor:pointer;
+  border:1px solid transparent;
+}
+.chatItem:active{background:#0d1620}
+.chatItem.active{background:#0e1a26;border-color:#1d465c}
+.chatItem .ciAvatar{
+  width:42px;height:42px;border-radius:50%;flex:0 0 auto;display:flex;align-items:center;justify-content:center;
+  font-size:19px;background:linear-gradient(145deg,#061a2a,#0c314b);border:1px solid #176b91;
+}
+.ciMain{flex:1 1 auto;min-width:0}
+.ciTop{display:flex;justify-content:space-between;gap:8px}
+.ciName{font-size:13.5px;font-weight:800;color:#eef8ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ciTime{font-size:10px;color:#5f7889;flex:0 0 auto}
+.ciBottom{display:flex;justify-content:space-between;gap:8px;margin-top:2px}
+.ciPreview{font-size:12px;color:#7b93a4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ciBadge{
+  flex:0 0 auto;min-width:19px;height:19px;padding:0 5px;border-radius:999px;background:#00d9ff;color:#001018;
+  font-size:10.5px;font-weight:900;display:flex;align-items:center;justify-content:center;
+}
+.emptyList{margin:30px auto;text-align:center;color:#4c6577;font-size:12.5px;max-width:220px;line-height:1.6}
+
+/* ---- thread pane ---- */
+
+.threadPane{display:none;flex-direction:column;flex:1 1 auto;min-width:0;background:var(--bg)}
+.threadTop{
+  flex:0 0 auto;height:60px;display:flex;align-items:center;gap:11px;padding:0 14px;
+  background:linear-gradient(180deg,#0b1622,#070e16);border-bottom:1px solid #16293a;
+}
+.threadBack{
+  width:34px;height:34px;border-radius:50%;border:0;background:transparent;color:#cfeeff;
+  display:flex;align-items:center;justify-content:center;flex:0 0 auto;
+}
+.threadWho{min-width:0;flex:1 1 auto}
+.threadNameRow{display:flex;align-items:center;gap:7px;min-width:0}
+.threadWho b{font-size:14px;color:#eef8ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.threadWho span{display:block;font-size:10.5px;color:#5fe39b;margin-top:1px}
+.copyIdBtn{
+  flex:0 0 auto;width:24px;height:24px;border-radius:7px;border:1px solid #1c2f3d;
+  background:#101a24;color:#9fd8ff;font-size:12px;display:flex;align-items:center;justify-content:center;
+}
+.copyIdBtn.copied{color:#4ee78a;border-color:#245d47;background:rgba(78,231,138,.1)}
+
+.balancePanel{
+  flex:0 0 auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  padding:10px 14px;background:#0a141d;border-bottom:1px solid #16293a;
+}
+.balanceInfo{display:flex;flex-direction:column;flex:0 0 auto;margin-right:auto}
+.balanceLabel{font-size:9.5px;letter-spacing:.4px;color:#5f7a8c}
+.balanceValue{font-size:15px;font-weight:800;color:#eef8ff;margin-top:1px}
+.balanceControls{display:flex;align-items:center;gap:7px;flex:1 1 auto;justify-content:flex-end}
+.balanceInput{
+  width:84px;min-width:0;height:34px;border-radius:9px;border:1px solid #22384a;
+  background:#050b12;color:#fff;padding:0 10px;font-size:12.5px;outline:none;
+}
+.balanceInput:focus{border-color:#00d9ff}
+.addCoinBtn,.removeCoinBtn{
+  flex:0 0 auto;height:34px;padding:0 12px;border-radius:9px;font-size:12px;font-weight:800;border:1px solid transparent;
+}
+.addCoinBtn{background:rgba(78,231,138,.12);color:#4ee78a;border-color:#245d47}
+.removeCoinBtn{background:rgba(239,68,68,.12);color:#ff8f8f;border-color:#5a2929}
+.addCoinBtn:disabled,.removeCoinBtn:disabled{opacity:.5}
+
+.threadBody{
+  flex:1 1 auto;overflow-y:auto;padding:16px 12px;
+  background:
+    radial-gradient(circle at 15% 8%,rgba(0,217,255,.05),transparent 40%),
+    radial-gradient(circle at 85% 92%,rgba(212,175,55,.05),transparent 40%),
+    var(--bg);
+  display:flex;flex-direction:column;gap:3px;
+}
+.threadEmpty{margin:auto;text-align:center;color:#4c6577;font-size:12.5px;max-width:240px;line-height:1.6}
+
+.bubbleRow{display:flex;margin:3px 0}
+.bubbleRow.out{justify-content:flex-end}
+.bubbleRow.in{justify-content:flex-start}
+.bubble{
+  max-width:70%;padding:9px 12px 7px;border-radius:15px;font-size:13.5px;line-height:1.45;
+  box-shadow:0 2px 8px rgba(0,0,0,.25);word-break:break-word;
+}
+.bubbleRow.out .bubble{background:linear-gradient(135deg,#0b6fa8,#0a5686);color:#eef8ff;border-bottom-right-radius:4px}
+.bubbleRow.in .bubble{background:#101a24;color:#e6f1f7;border:1px solid #1c2f3d;border-bottom-left-radius:4px}
+.bubble img{display:block;max-width:100%;border-radius:10px;margin-bottom:4px;cursor:pointer}
+.bubble .bTime{display:block;text-align:right;font-size:9.5px;color:rgba(255,255,255,.55);margin-top:3px}
+.bubbleRow.in .bubble .bTime{color:#5f7889}
+
+.chatDay{
+  align-self:center;margin:10px 0 6px;padding:4px 12px;border-radius:999px;
+  background:#0d1822;border:1px solid #1c2f3d;color:#7b93a4;font-size:10.5px;font-weight:700;
+}
+
+.composer{
+  flex:0 0 auto;display:flex;align-items:flex-end;gap:8px;padding:10px;
+  background:#070e16;border-top:1px solid #16293a;
+}
+.attachBtn,.sendBtn{
+  flex:0 0 auto;width:42px;height:42px;border-radius:50%;border:0;display:flex;
+  align-items:center;justify-content:center;color:#bfe9ff;background:#101a24;
+}
+.sendBtn{background:linear-gradient(135deg,#00e5ff,#168cff);color:#001018}
+.sendBtn:disabled{opacity:.4}
+.inputWrap{
+  flex:1 1 auto;display:flex;align-items:center;background:#101a24;border:1px solid #1c2f3d;
+  border-radius:22px;padding:2px 4px 2px 14px;min-height:42px;
+}
+.msgInput{flex:1 1 auto;border:0;background:transparent;color:#eef8ff;font-size:13.5px;outline:none;resize:none;max-height:90px;padding:9px 0;line-height:1.4}
+.previewBar{display:none;flex:0 0 auto;align-items:center;gap:10px;padding:8px 12px;background:#0b1622;border-top:1px solid #16293a}
+.previewBar.on{display:flex}
+.previewBar img{width:44px;height:44px;object-fit:cover;border-radius:8px}
+.previewBar span{flex:1 1 auto;color:#8ea8b8;font-size:11.5px}
+.previewCancel{background:transparent;border:0;color:#ff8585;font-size:12px;font-weight:800}
+
+.noThread{
+  display:none;flex:1 1 auto;align-items:center;justify-content:center;flex-direction:column;gap:10px;color:#4c6577;
+}
+.noThread svg{opacity:.35}
+.noThread p{font-size:13px;max-width:240px;text-align:center;line-height:1.6}
+
+.deniedBox{
+  max-width:400px;margin:80px auto 0;text-align:center;padding:28px 20px;background:#0d131c;border:1px solid #5a2929;
+  border-radius:18px;color:#ffbaba;
+}
+.deniedBox h2{font-size:16px;margin-bottom:8px}
+.deniedBox p{font-size:12.5px;color:#c98d8d;line-height:1.6}
+
+/* ---- desktop layout ---- */
+
+@media(min-width:760px){
+  .sidebar{max-width:340px;flex:0 0 340px}
+  .threadPane{display:flex !important}
+  .threadBack{display:none}
+  .noThread{display:flex}
+}
+
+@media(max-width:759px){
+  .adminBody.showThread .sidebar{display:none}
+  .adminBody:not(.showThread) .threadPane{display:none}
+  .adminBody.showThread .threadPane{display:flex}
+}
+
+</style>
+</head>
+
+<body>
+
+<div id="loading" class="loading">
+  <div class="spinner"></div>
+  <span>Loading...</span>
+</div>
+
+
+<!-- ================= LOGIN ================= -->
+
+<div id="loginPage">
+
+  <div class="loginBrand">
+    <div class="tensor">TensorWave</div>
+    <div class="waveLogo">🌊</div>
+    <div class="loginTitle">T-WAVE ADMIN</div>
+    <div class="loginSub">Support &amp; message panel</div>
+  </div>
+
+  <div class="loginBox">
+
+    <div class="field">
+      <label>Admin Phone Number</label>
+      <input id="adminEmail" type="tel" placeholder="+2348012345678" autocomplete="username">
+    </div>
+
+    <div class="field">
+      <label>Password</label>
+      <input id="adminPassword" type="password" placeholder="Enter password" autocomplete="current-password">
+    </div>
+
+    <button class="primaryBtn" id="signInBtn" onclick="adminSignIn()">SIGN IN</button>
+
+    <div id="loginStatus" class="loginStatus"></div>
+
+  </div>
+
+</div>
+
+
+<!-- ================= ADMIN PANEL ================= -->
+
+<div id="adminPage">
+
+  <div class="adminTop">
+    <div class="adminBrand">T-WAVE <span>ADMIN</span></div>
+    <button class="signOutBtn" onclick="adminSignOut()">SIGN OUT</button>
+  </div>
+
+  <div class="adminTabs">
+    <button class="adminTabBtn active" id="tabChatsBtn" onclick="showAdminTab('chats')">💬 Chats</button>
+    <button class="adminTabBtn" id="tabReferralsBtn" onclick="showAdminTab('referrals')">🎁 Referrals</button>
+    <button class="adminTabBtn" id="tabPaymentBtn" onclick="showAdminTab('payment')">💳 Payment</button>
+  </div>
+
+  <div class="referralsPage" id="referralsPage" style="display:none">
+    <div class="refHead">
+      <h1>Referrals</h1>
+      <p>Everyone who signed up with a friend's T-WAVE ID. Confirm they're real, then reward the referrer.</p>
+    </div>
+    <div class="refList" id="refList">
+      <div class="emptyList">No referrals yet.</div>
+    </div>
+  </div>
+
+  <div class="referralsPage" id="paymentPage" style="display:none">
+    <div class="refHead">
+      <h1>Payment Account</h1>
+      <p>The bank account buyers see and pay into when they tap Buy Coin. Changes apply immediately.</p>
+    </div>
+    <div class="payForm" id="payForm">
+      <div class="payCurrent" id="payCurrent">Loading current details…</div>
+      <div class="payField">
+        <label>Account name</label>
+        <input id="payAccountName" type="text" placeholder="e.g. John Doe">
+      </div>
+      <div class="payField">
+        <label>Bank name</label>
+        <input id="payBankName" type="text" placeholder="e.g. GTBank">
+      </div>
+      <div class="payField">
+        <label>Account number</label>
+        <input id="payAccountNumber" type="text" placeholder="e.g. 0123456789">
+      </div>
+      <button class="refApproveBtn" style="width:100%" onclick="savePaymentSettings()">Save Changes</button>
+      <div class="payMsg" id="payMsg"></div>
+    </div>
+  </div>
+
+  <div class="adminBody" id="adminBody">
+
+    <div class="sidebar">
+      <div class="sidebarHead">
+        <h1>Support Chats</h1>
+        <p>All customer messages arrive here in real time.</p>
+      </div>
+      <div class="chatList" id="chatList">
+        <div class="emptyList">No conversations yet.</div>
+      </div>
+    </div>
+
+    <div class="noThread" id="noThread">
+      <svg viewBox="0 0 24 24" width="52" height="52" fill="none"><path d="M4 5.5C4 4.67 4.67 4 5.5 4h13c.83 0 1.5.67 1.5 1.5v10c0 .83-.67 1.5-1.5 1.5H9l-4.2 3.3c-.5.4-1.3.04-1.3-.6V17h-.5A1.5 1.5 0 0 1 2 15.5" stroke="#33526a" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <p>Select a conversation from the list to view and reply.</p>
+    </div>
+
+    <div class="threadPane" id="threadPane">
+
+      <div class="threadTop">
+        <button class="threadBack" onclick="closeThread()" aria-label="Back">
+          <svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M15 5L8 12l7 7" stroke="#cfeeff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="threadWho">
+          <div class="threadNameRow">
+            <b id="threadName">—</b>
+            <button class="copyIdBtn" id="copyIdBtn" onclick="copyThreadId()" aria-label="Copy User ID" title="Copy User ID">📋</button>
+          </div>
+          <span id="threadSub">—</span>
+        </div>
+      </div>
+
+      <div class="balancePanel" id="balancePanel">
+        <div class="balanceInfo">
+          <span class="balanceLabel">T-WAVE BALANCE</span>
+          <span class="balanceValue" id="balanceValue">—</span>
+        </div>
+        <div class="balanceControls">
+          <input type="number" id="balanceAmount" class="balanceInput" placeholder="Amount" min="1" step="1">
+          <button class="addCoinBtn" onclick="adjustBalance(1)">➕ Add</button>
+          <button class="removeCoinBtn" onclick="adjustBalance(-1)">➖ Remove</button>
+        </div>
+      </div>
+
+      <div class="threadBody" id="threadBody">
+        <div class="threadEmpty">No messages yet.</div>
+      </div>
+
+      <div class="previewBar" id="previewBar">
+        <img id="previewImg" alt="">
+        <span>Image ready to send</span>
+        <button class="previewCancel" onclick="cancelImage()">REMOVE</button>
+      </div>
+
+      <div class="composer">
+        <button class="attachBtn" onclick="document.getElementById('msgFile').click()" aria-label="Attach image">
+          <svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M21 12.5v5A3.5 3.5 0 0 1 17.5 21h-11A3.5 3.5 0 0 1 3 17.5v-9A3.5 3.5 0 0 1 6.5 5H13" stroke="#bfe9ff" stroke-width="1.8" stroke-linecap="round"/><path d="M16 3l5 5M21 3l-5 5" stroke="#bfe9ff" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+        <input type="file" id="msgFile" accept="image/*" style="display:none" onchange="handleFile(event)">
+        <div class="inputWrap">
+          <textarea class="msgInput" id="msgInput" rows="1" placeholder="Reply to customer..." onkeydown="msgInputKeydown(event)"></textarea>
+        </div>
+        <button class="sendBtn" id="sendBtn" onclick="sendReply()" aria-label="Send">
+          <svg viewBox="0 0 24 24" fill="none" width="18" height="18"><path d="M3 11.5L20.5 4 13 21.5l-2.6-7L3 11.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<script>
+
+/* =========================================================
+   FIREBASE CONFIG (same project as the T-WAVE app)
+========================================================= */
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCNZAyQHOL3-2JaLRUw3MDnWw015m8UflU",
+  authDomain: "omega-coin-272b9.firebaseapp.com",
+  projectId: "omega-coin-272b9",
+  storageBucket: "omega-coin-272b9.firebasestorage.app",
+  messagingSenderId: "850636304935",
+  appId: "1:850636304935:web:2d939b98dd8c9a63bd5402"
+};
+
+firebase.initializeApp(firebaseConfig);
+
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+/* Image uploads go to Cloudinary (free, no card required) instead of
+   Firebase Storage. Use the SAME values here as in index.html. */
+const CLOUDINARY_CLOUD_NAME = "kh5apnri";
+const CLOUDINARY_UPLOAD_PRESET = "omega_receipts";
+
+async function uploadImageToCloudinary(file){
+
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+
+  const res = await fetch(
+    "https://api.cloudinary.com/v1_1/" + CLOUDINARY_CLOUD_NAME + "/image/upload",
+    { method: "POST", body: formData }
+  );
+
+  if(!res.ok){
+    const errText = await res.text().catch(function(){ return ""; });
+    throw new Error("Cloudinary upload failed (" + res.status + "): " + errText);
+  }
+
+  const data = await res.json();
+  return data.secure_url;
+
+}
+
+
+/* =========================================================
+   STATE
+========================================================= */
+
+let adminUser = null;
+let unsubscribeChatList = null;
+let unsubscribeThread = null;
+let unsubscribeUserBalance = null;
+let unsubscribeReferrals = null;
+let selectedUid = null;
+let pendingFile = null;
+let sending = false;
+let threadCopyId = "";
+
+
+/* =========================================================
+   HELPERS
+========================================================= */
+
+function showLoading(){ document.getElementById("loading").style.display = "flex"; }
+function hideLoading(){ document.getElementById("loading").style.display = "none"; }
+
+function setLoginStatus(msg,color){
+  const el = document.getElementById("loginStatus");
+  el.textContent = msg || "";
+  el.style.color = color || "#ffb4b4";
+}
+
+function escapeHtml(value){
+  return String(value || "")
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#039;");
+}
+
+function friendlyError(error){
+  if(!error) return "Something went wrong.";
+  switch(error.code){
+    case "auth/invalid-credential":
+    case "auth/wrong-password":
+      return "Incorrect email or password.";
+    case "auth/user-not-found":
+      return "No admin account found for this email.";
+    case "auth/network-request-failed":
+      return "Network connection failed.";
+    case "permission-denied":
+      return "Permission denied by Firebase.";
+    default:
+      return error.message || "Something went wrong.";
+  }
+}
+
+
+/* =========================================================
+   ADMIN SIGN IN / OUT
+========================================================= */
+
+function normalizePhone(phone){
+  let value = String(phone || "").trim().replace(/[^\d+]/g,"");
+  if(value.startsWith("00")){ value = "+" + value.substring(2); }
+  return value;
+}
+
+function phoneToAuthEmail(phone){
+  const clean = normalizePhone(phone);
+  const digits = clean.replace(/\D/g,"");
+  return digits + "@t-wave.app";
+}
+
+async function adminSignIn(){
+
+  const phone = document.getElementById("adminEmail").value.trim();
+  const password = document.getElementById("adminPassword").value.trim();
+
+  if(!phone || !password){
+    setLoginStatus("Enter your admin phone number and password.");
+    return;
+  }
+
+  const btn = document.getElementById("signInBtn");
+  btn.disabled = true;
+
+  try{
+
+    showLoading();
+
+    await auth.signInWithEmailAndPassword(phoneToAuthEmail(phone),password);
+
+  }
+  catch(error){
+
+    hideLoading();
+
+    setLoginStatus(friendlyError(error));
+
+  }
+  finally{
+
+    btn.disabled = false;
+
+  }
+
+}
+
+async function adminSignOut(){
+
+  try{
+
+    if(unsubscribeChatList){ unsubscribeChatList(); unsubscribeChatList = null; }
+    if(unsubscribeThread){ unsubscribeThread(); unsubscribeThread = null; }
+
+    await auth.signOut();
+
+  }
+  catch(error){
+
+    alert(friendlyError(error));
+
+  }
+
+}
+
+
+/* =========================================================
+   AUTH STATE
+========================================================= */
+
+auth.onAuthStateChanged(async user => {
+
+  if(user){
+
+    showLoading();
+
+    try{
+
+      const adminSnap = await db.collection("admins").doc(user.uid).get();
+
+      if(!adminSnap.exists || adminSnap.data().active === false){
+
+        hideLoading();
+
+        document.getElementById("loginPage").style.display = "none";
+        document.getElementById("adminPage").style.display = "none";
+
+        document.body.innerHTML =
+          '<div class="deniedBox"><h2>Not authorized</h2>' +
+          '<p>This account is not set up for admin access. Ask the T-WAVE owner to add your UID to the <b>admins</b> collection in Firestore, then sign in again.</p>' +
+          '<p style="margin-top:14px;color:#7b93a4">UID: ' + escapeHtml(user.uid) + '</p></div>';
+
+        await auth.signOut();
+
+        return;
+
+      }
+
+      adminUser = user;
+
+      document.getElementById("loginPage").style.display = "none";
+      document.getElementById("adminPage").style.display = "flex";
+
+      listenToChatList();
+      listenToReferrals();
+
+      hideLoading();
+
+    }
+    catch(error){
+
+      hideLoading();
+
+      console.error(error);
+
+      setLoginStatus(friendlyError(error));
+
+    }
+
+  }
+  else{
+
+    adminUser = null;
+    selectedUid = null;
+
+    if(unsubscribeChatList){ unsubscribeChatList(); unsubscribeChatList = null; }
+    if(unsubscribeThread){ unsubscribeThread(); unsubscribeThread = null; }
+    if(unsubscribeReferrals){ unsubscribeReferrals(); unsubscribeReferrals = null; }
+
+    document.getElementById("adminPage").style.display = "none";
+    document.getElementById("loginPage").style.display = "flex";
+
+  }
+
+});
+
+
+/* =========================================================
+   CHAT LIST
+========================================================= */
+
+function fmtTime(ts){
+
+  if(!ts || !ts.toDate) return "";
+
+  const d = ts.toDate();
+  const now = new Date();
+
+  if(d.toDateString() === now.toDateString()){
+    let h = d.getHours(), m = d.getMinutes();
+    const ap = h >= 12 ? "PM" : "AM";
+    h = h % 12; if(h === 0) h = 12;
+    return h + ":" + (m < 10 ? "0" + m : m) + " " + ap;
+  }
+
+  return d.toLocaleDateString(undefined,{day:"numeric",month:"short"});
+
+}
+
+function listenToChatList(){
+
+  if(unsubscribeChatList) unsubscribeChatList();
+
+  unsubscribeChatList = db.collection("chats")
+    .orderBy("updatedAt","desc")
+    .onSnapshot(function(snap){
+
+      const list = document.getElementById("chatList");
+
+      if(snap.empty){
+        list.innerHTML = '<div class="emptyList">No conversations yet.</div>';
+        return;
+      }
+
+      let html = "";
+
+      snap.forEach(function(doc){
+
+        const d = doc.data();
+        const uid = doc.id;
+        const unread = Number(d.unreadAdmin || 0);
+        const name = d.twaveUid || d.phone || uid.slice(0,8);
+
+        html +=
+          '<div class="chatItem' + (uid === selectedUid ? " active" : "") + '" onclick="openThread(\'' + uid + '\')">' +
+            '<div class="ciAvatar">🧑</div>' +
+            '<div class="ciMain">' +
+              '<div class="ciTop"><span class="ciName">' + escapeHtml(name) + '</span>' +
+              '<span class="ciTime">' + fmtTime(d.updatedAt) + '</span></div>' +
+              '<div class="ciBottom"><span class="ciPreview">' + escapeHtml(d.lastMessage || "") + '</span>' +
+              (unread > 0 ? '<span class="ciBadge">' + (unread > 9 ? "9+" : unread) + '</span>' : "") +
+              '</div>' +
+            '</div>' +
+          '</div>';
+
+      });
+
+      list.innerHTML = html;
+
+    }, function(e){ console.log("chat list:",e); });
+
+}
+
+
+/* =========================================================
+   THREAD
+========================================================= */
+
+function chatBubbleTime(ts){
+
+  if(!ts || !ts.toDate) return "";
+
+  const d = ts.toDate();
+  let h = d.getHours(), m = d.getMinutes();
+  const ap = h >= 12 ? "PM" : "AM";
+  h = h % 12; if(h === 0) h = 12;
+
+  return h + ":" + (m < 10 ? "0" + m : m) + " " + ap;
+
+}
+
+function chatDayLabel(ts){
+
+  if(!ts || !ts.toDate) return "";
+
+  const d = ts.toDate();
+  const today = new Date();
+
+  if(d.toDateString() === today.toDateString()) return "Today";
+
+  const yest = new Date(today);
+  yest.setDate(yest.getDate() - 1);
+
+  if(d.toDateString() === yest.toDateString()) return "Yesterday";
+
+  return d.toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"});
+
+}
+
+function renderThreadMessages(docs){
+
+  const body = document.getElementById("threadBody");
+
+  if(!docs.length){
+    body.innerHTML = '<div class="threadEmpty">No messages yet. Say hello!</div>';
+    return;
+  }
+
+  let html = "";
+  let lastDay = "";
+
+  docs.forEach(function(doc){
+
+    const m = doc.data();
+    const day = chatDayLabel(m.createdAt);
+
+    if(day && day !== lastDay){
+      html += '<div class="chatDay">' + escapeHtml(day) + '</div>';
+      lastDay = day;
+    }
+
+    const out = m.sender === "admin";
+    const time = chatBubbleTime(m.createdAt);
+
+    html += '<div class="bubbleRow ' + (out ? "out" : "in") + '"><div class="bubble">';
+
+    if(m.imageUrl){
+      html += '<img src="' + m.imageUrl + '" alt="Photo" onclick="window.open(this.src,\'_blank\')">';
+    }
+
+    if(m.text){
+      html += '<span>' + escapeHtml(m.text).replace(/\n/g,'<br>') + '</span>';
+    }
+
+    html += '<span class="bTime">' + time + '</span></div></div>';
+
+  });
+
+  body.innerHTML = html;
+  body.scrollTop = body.scrollHeight;
+
+}
+
+function openThread(uid){
+
+  selectedUid = uid;
+
+  document.getElementById("adminBody").classList.add("showThread");
+
+  document.querySelectorAll(".chatItem").forEach(function(el){ el.classList.remove("active"); });
+
+  const active = document.querySelector('.chatItem[onclick="openThread(\'' + uid + '\')"]');
+  if(active) active.classList.add("active");
+
+  db.collection("chats").doc(uid).get().then(function(snap){
+
+    const d = snap.exists ? snap.data() : {};
+
+    threadCopyId = d.twaveUid || uid;
+
+    document.getElementById("threadName").textContent = d.twaveUid || d.phone || uid.slice(0,8);
+    document.getElementById("threadSub").textContent = "● " + (d.phone ? d.phone : "Customer");
+
+  });
+
+  db.collection("chats").doc(uid).set({ unreadAdmin: 0 },{merge:true}).catch(function(){});
+
+  if(unsubscribeThread) unsubscribeThread();
+
+  unsubscribeThread = db.collection("chats").doc(uid).collection("messages")
+    .orderBy("createdAt","asc")
+    .onSnapshot(function(snap){
+      renderThreadMessages(snap.docs);
+    }, function(e){ console.log("thread:",e); });
+
+  listenToUserBalance(uid);
+
+  setTimeout(function(){
+    const input = document.getElementById("msgInput");
+    if(input) input.focus();
+  },200);
+
+}
+
+function closeThread(){
+
+  document.getElementById("adminBody").classList.remove("showThread");
+
+  if(unsubscribeThread){ unsubscribeThread(); unsubscribeThread = null; }
+  if(unsubscribeUserBalance){ unsubscribeUserBalance(); unsubscribeUserBalance = null; }
+
+  selectedUid = null;
+
+}
+
+
+/* =========================================================
+   BALANCE — ADD / REMOVE COIN
+========================================================= */
+
+function listenToUserBalance(uid){
+
+  if(unsubscribeUserBalance) unsubscribeUserBalance();
+
+  const el = document.getElementById("balanceValue");
+  if(el) el.textContent = "—";
+
+  unsubscribeUserBalance = db.collection("users").doc(uid).onSnapshot(function(snap){
+
+    const bal = snap.exists ? Number(snap.data().balance || 0) : 0;
+    if(el) el.textContent = bal.toLocaleString() + " T-WAVE";
+
+  }, function(e){ console.log("balance:",e); if(el) el.textContent = "—"; });
+
+}
+
+async function adjustBalance(direction){
+
+  if(!selectedUid) return;
+
+  const input = document.getElementById("balanceAmount");
+  const amount = Number(input.value);
+
+  if(!amount || amount <= 0){
+    alert("Enter an amount greater than 0.");
+    return;
+  }
+
+  const delta = direction * amount;
+  const uid = selectedUid;
+  const userRef = db.collection("users").doc(uid);
+
+  try{
+
+    let referralToReward = null;
+
+    await db.runTransaction(async function(tx){
+
+      const snap = await tx.get(userRef);
+      const current = snap.exists ? Number(snap.data().balance || 0) : 0;
+      const next = current + delta;
+
+      if(next < 0){
+        throw new Error("INSUFFICIENT");
+      }
+
+      const updates = { balance: next };
+
+      // First-ever coin added to a referred user triggers their
+      // referrer's purchase bonus — exactly once per new user.
+      if(direction > 0 && snap.exists){
+
+        const data = snap.data();
+
+        if(data.referredByUid && data.firstPurchaseRewarded !== true){
+          referralToReward = data.referredByUid;
+          updates.firstPurchaseRewarded = true;
+        }
+
+      }
+
+      tx.update(userRef, updates);
+
+    });
+
+    let twaveUid = "";
+
+    try{
+      const chatSnap = await db.collection("chats").doc(uid).get();
+      twaveUid = chatSnap.exists ? (chatSnap.data().twaveUid || "") : "";
+    }catch(e){ /* non-fatal */ }
+
+    await db.collection("transactions").add({
+      uid: twaveUid,
+      type: direction > 0 ? "ADD" : "REMOVE",
+      amount: amount,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    if(referralToReward){
+      await payReferralPurchaseBonus(referralToReward);
+    }
+
+    input.value = "";
+
+  }
+  catch(error){
+
+    if(error && error.message === "INSUFFICIENT"){
+      alert("That would take the user's balance below zero.");
+    }
+    else{
+      console.error(error);
+      alert(friendlyError(error));
+    }
+
+  }
+
+}
+
+async function payReferralPurchaseBonus(referrerUid){
+
+  try{
+
+    const amounts = await getReferralNairaAmounts();
+    const rate = await getCurrentRate();
+    const bonusTwave = nairaToTwave(amounts.purchaseNaira, rate);
+
+    const referrerRef = db.collection("users").doc(referrerUid);
+    let referrerTwaveId = "";
+
+    await db.runTransaction(async function(tx){
+      const snap = await tx.get(referrerRef);
+      const bal = snap.exists ? Number(snap.data().balance || 0) : 0;
+      referrerTwaveId = snap.exists ? (snap.data().uid || "") : "";
+      tx.update(referrerRef, { balance: bal + bonusTwave });
+    });
+
+    await db.collection("transactions").add({
+      uid: referrerTwaveId,
+      type: "REFERRAL_PURCHASE_BONUS",
+      amount: bonusTwave,
+      amountNaira: amounts.purchaseNaira,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    sendAdminChatNotice(referrerUid,
+      "🎉 Your invited friend just bought T-WAVE! You've earned another ₦" +
+      amounts.purchaseNaira.toLocaleString() + " (" + bonusTwave + " T-WAVE)."
+    );
+
+  }
+  catch(e){
+
+    console.log("purchase bonus error:", e);
+
+  }
+
+}
+
+
+/* =========================================================
+   TABS (chats / referrals)
+========================================================= */
+
+function showAdminTab(tab){
+
+  const chatsBtn = document.getElementById("tabChatsBtn");
+  const refBtn = document.getElementById("tabReferralsBtn");
+  const payBtn = document.getElementById("tabPaymentBtn");
+  const chatsBody = document.getElementById("adminBody");
+  const refPage = document.getElementById("referralsPage");
+  const payPage = document.getElementById("paymentPage");
+
+  chatsBtn.classList.remove("active");
+  refBtn.classList.remove("active");
+  payBtn.classList.remove("active");
+  chatsBody.style.display = "none";
+  refPage.style.display = "none";
+  payPage.style.display = "none";
+
+  if(tab === "referrals"){
+    refBtn.classList.add("active");
+    refPage.style.display = "block";
+  }
+  else if(tab === "payment"){
+    payBtn.classList.add("active");
+    payPage.style.display = "block";
+    loadPaymentSettings();
+  }
+  else{
+    chatsBtn.classList.add("active");
+    chatsBody.style.display = "flex";
+  }
+
+}
+
+
+/* =========================================================
+   PAYMENT ACCOUNT SETTINGS
+========================================================= */
+
+async function loadPaymentSettings(){
+
+  const box = document.getElementById("payCurrent");
+  box.textContent = "Loading current details…";
+
+  try{
+
+    const snap = await db.collection("settings").doc("payment").get();
+
+    if(snap.exists){
+
+      const d = snap.data();
+
+      document.getElementById("payAccountName").value = d.accountName || "";
+      document.getElementById("payBankName").value = d.bankName || "";
+      document.getElementById("payAccountNumber").value = d.accountNumber || "";
+
+      box.innerHTML =
+        "Currently showing: <b>" + escapeHtml(d.accountName || "—") + "</b> · " +
+        escapeHtml(d.bankName || "—") + "<br><b>" + escapeHtml(d.accountNumber || "—") + "</b>";
+
+    }
+    else{
+
+      box.textContent = "No payment account set yet — fill in the details below.";
+
+    }
+
+  }
+  catch(error){
+
+    console.error(error);
+    box.textContent = "Could not load current details, but you can still save new ones below.";
+
+  }
+
+}
+
+async function savePaymentSettings(){
+
+  const accountName = document.getElementById("payAccountName").value.trim();
+  const bankName = document.getElementById("payBankName").value.trim();
+  const accountNumber = document.getElementById("payAccountNumber").value.trim();
+  const msg = document.getElementById("payMsg");
+
+  msg.className = "payMsg";
+  msg.textContent = "";
+
+  if(!accountName || !bankName || !accountNumber){
+    msg.textContent = "Fill in all three fields.";
+    msg.className = "payMsg err";
+    return;
+  }
+
+  try{
+
+    await db.collection("settings").doc("payment").set({
+      accountName, bankName, accountNumber,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    },{merge:true});
+
+    msg.textContent = "Saved ✓ — buyers will see this immediately.";
+    msg.className = "payMsg ok";
+
+    document.getElementById("payCurrent").innerHTML =
+      "Currently showing: <b>" + escapeHtml(accountName) + "</b> · " +
+      escapeHtml(bankName) + "<br><b>" + escapeHtml(accountNumber) + "</b>";
+
+  }
+  catch(error){
+
+    console.error(error);
+    msg.textContent = friendlyError(error);
+    msg.className = "payMsg err";
+
+  }
+
+}
+
+
+/* =========================================================
+   REFERRALS
+========================================================= */
+
+function referralStatusLabel(status){
+  if(status === "rewarded") return "✅ Rewarded";
+  if(status === "rejected") return "✖️ Rejected";
+  return "⏳ Pending";
+}
+
+function listenToReferrals(){
+
+  if(unsubscribeReferrals) unsubscribeReferrals();
+
+  unsubscribeReferrals = db.collection("referrals")
+    .orderBy("createdAt","desc")
+    .onSnapshot(function(snap){
+
+      const list = document.getElementById("refList");
+
+      if(snap.empty){
+        list.innerHTML = '<div class="emptyList">No referrals yet.</div>';
+        return;
+      }
+
+      let html = "";
+
+      snap.forEach(function(doc){
+
+        const d = doc.data();
+        const id = doc.id;
+        const status = d.status || "pending";
+        const time = fmtTime(d.createdAt);
+
+        html +=
+          '<div class="refItem" id="refItem-' + id + '">' +
+            '<div class="refTop">' +
+              '<div>' +
+                '<div class="refNewUser">' + escapeHtml(d.newUserTwaveId || id.slice(0,8)) + '</div>' +
+                '<div class="refPhone">' + escapeHtml(d.newUserPhone || "") + (time ? " · " + time : "") + '</div>' +
+              '</div>' +
+              '<span class="refBadge ' + status + '">' + referralStatusLabel(status) + '</span>' +
+            '</div>' +
+            '<div class="refCodeRow">Referred by code: <b>' + escapeHtml(d.referrerCode || "—") + '</b></div>' +
+            (status === "pending"
+              ? '<div class="refActions">' +
+                  '<button class="refApproveBtn" onclick="approveReferral(\'' + id + '\')">✅ Approve &amp; Reward</button>' +
+                  '<button class="refRejectBtn" onclick="rejectReferral(\'' + id + '\')">✖️ Reject</button>' +
+                '</div>'
+              : '<div class="refNote">' +
+                  (status === "rewarded" ? "Referrer was credited for the signup. They'll be credited again automatically the moment this user buys their first T-WAVE." : "No bonus was given.") +
+                '</div>') +
+          '</div>';
+
+      });
+
+      list.innerHTML = html;
+
+    }, function(e){
+      console.log("referrals:",e);
+      const list = document.getElementById("refList");
+      if(list) list.innerHTML = '<div class="emptyList">Could not load referrals.</div>';
+    });
+
+}
+
+async function getCurrentRate(){
+
+  try{
+
+    const snap = await db.collection("settings").doc("omxRate").get();
+
+    if(snap.exists && snap.data().rate != null){
+      const r = Number(snap.data().rate);
+      if(Number.isFinite(r) && r > 0) return r;
+    }
+
+  }
+  catch(e){ /* fall through to default */ }
+
+  return 850;
+
+}
+
+function nairaToTwave(nairaAmount, rate){
+  return Math.round((nairaAmount / rate) * 100) / 100;
+}
+
+async function getReferralNairaAmounts(){
+
+  try{
+
+    const snap = await db.collection("settings").doc("referral").get();
+
+    if(snap.exists){
+
+      const d = snap.data();
+
+      return {
+        signupNaira: Number(d.signupBonusNaira || 300),
+        purchaseNaira: Number(d.purchaseBonusNaira || 300)
+      };
+
+    }
+
+  }
+  catch(e){ /* fall through to defaults */ }
+
+  return { signupNaira: 300, purchaseNaira: 300 };
+
+}
+
+async function approveReferral(refId){
+
+  const btn = document.querySelector('#refItem-' + refId + ' .refApproveBtn');
+  const rejectBtn = document.querySelector('#refItem-' + refId + ' .refRejectBtn');
+
+  if(btn){ btn.disabled = true; btn.textContent = "Working…"; }
+  if(rejectBtn){ rejectBtn.disabled = true; }
+
+  try{
+
+    const refDoc = await db.collection("referrals").doc(refId).get();
+
+    if(!refDoc.exists){
+      alert("This referral no longer exists.");
+      return;
+    }
+
+    const d = refDoc.data();
+
+    if(d.status && d.status !== "pending"){
+      alert("This referral was already handled.");
+      return;
+    }
+
+    const referrerCode = String(d.referrerCode || "").trim();
+    const newUserUid = d.newUserUid;
+
+    if(!referrerCode || !newUserUid){
+      alert("This referral is missing information and can't be rewarded.");
+      return;
+    }
+
+    const referrerSnap = await db.collection("users")
+      .where("uid","==",referrerCode)
+      .limit(1)
+      .get();
+
+    if(referrerSnap.empty){
+      alert("No account found with the code \"" + referrerCode + "\". Ask the user to double-check it, or reject this referral.");
+      return;
+    }
+
+    const referrerDocId = referrerSnap.docs[0].id;
+
+    if(referrerDocId === newUserUid){
+      alert("A user can't refer themself. Rejecting this referral.");
+      await db.collection("referrals").doc(refId).update({ status: "rejected" });
+      return;
+    }
+
+    const amounts = await getReferralNairaAmounts();
+    const rate = await getCurrentRate();
+    const signupBonusTwave = nairaToTwave(amounts.signupNaira, rate);
+
+    const referrerRef = db.collection("users").doc(referrerDocId);
+    const newUserRef = db.collection("users").doc(newUserUid);
+
+    await db.runTransaction(async function(tx){
+
+      const referrerSnapshot = await tx.get(referrerRef);
+      const newUserSnapshot = await tx.get(newUserRef);
+
+      const referrerBal = referrerSnapshot.exists ? Number(referrerSnapshot.data().balance || 0) : 0;
+      const referrerRefCount = referrerSnapshot.exists ? Number(referrerSnapshot.data().referralCount || 0) : 0;
+      const alreadyRewarded = newUserSnapshot.exists ? (newUserSnapshot.data().firstPurchaseRewarded === true) : false;
+
+      // Only the referrer is paid at signup — the gift for this stage
+      // goes to the person who invited someone, not the new user.
+      tx.update(referrerRef, {
+        balance: referrerBal + signupBonusTwave,
+        referralCount: referrerRefCount + 1
+      });
+
+      // Link the new user to their referrer so a second bonus can be
+      // paid automatically, once, the first time they buy T-WAVE.
+      tx.update(newUserRef, {
+        referredByUid: referrerDocId,
+        firstPurchaseRewarded: alreadyRewarded
+      });
+
+    });
+
+    await db.collection("transactions").add({
+      uid: referrerCode,
+      type: "REFERRAL_SIGNUP_BONUS",
+      amount: signupBonusTwave,
+      amountNaira: amounts.signupNaira,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    await db.collection("referrals").doc(refId).update({ status: "rewarded" });
+
+    const congratsForReferrer =
+      "🎉 Someone signed up with your referral code! You've earned ₦" +
+      amounts.signupNaira.toLocaleString() + " (" + signupBonusTwave + " T-WAVE). " +
+      "Remind them to buy their first T-WAVE — you'll earn another ₦" +
+      amounts.purchaseNaira.toLocaleString() + " the moment they do!";
+
+    const welcomeForNewUser =
+      "🎉 Your account is verified! Buy your first T-WAVE coin to get started — " +
+      "it also earns your friend a reward for inviting you. 🙌";
+
+    sendAdminChatNotice(referrerDocId, congratsForReferrer);
+    sendAdminChatNotice(newUserUid, welcomeForNewUser);
+
+  }
+  catch(error){
+
+    console.error(error);
+    alert(friendlyError(error));
+
+  }
+  finally{
+
+    if(btn){ btn.disabled = false; btn.textContent = "✅ Approve & Reward"; }
+    if(rejectBtn){ rejectBtn.disabled = false; }
+
+  }
+
+}
+
+async function rejectReferral(refId){
+
+  if(!confirm("Reject this referral? No bonus will be given.")) return;
+
+  try{
+
+    await db.collection("referrals").doc(refId).update({ status: "rejected" });
+
+  }
+  catch(error){
+
+    console.error(error);
+    alert(friendlyError(error));
+
+  }
+
+}
+
+async function sendAdminChatNotice(uid, text){
+
+  try{
+
+    await db.collection("chats").doc(uid).collection("messages").add({
+      sender: "admin",
+      text: text,
+      imageUrl: null,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    await db.collection("chats").doc(uid).set({
+      lastMessage: text,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      unreadUser: firebase.firestore.FieldValue.increment(1)
+    },{merge:true});
+
+  }
+  catch(error){
+
+    console.log("chat notice:",error);
+
+  }
+
+}
+
+
+/* =========================================================
+   COPY USER ID
+========================================================= */
+
+function fallbackCopyText(text){
+
+  try{
+
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+
+    document.execCommand("copy");
+
+    document.body.removeChild(ta);
+
+    return true;
+
+  }
+  catch(e){
+
+    console.log("copy failed:",e);
+    return false;
+
+  }
+
+}
+
+function copyThreadId(){
+
+  if(!threadCopyId) return;
+
+  const btn = document.getElementById("copyIdBtn");
+
+  const done = function(){
+    if(!btn) return;
+    btn.textContent = "✓";
+    btn.classList.add("copied");
+    setTimeout(function(){
+      btn.textContent = "📋";
+      btn.classList.remove("copied");
+    },1500);
+  };
+
+  if(navigator.clipboard && navigator.clipboard.writeText){
+
+    navigator.clipboard.writeText(threadCopyId).then(done).catch(function(){
+      fallbackCopyText(threadCopyId);
+      done();
+    });
+
+  }
+  else{
+
+    fallbackCopyText(threadCopyId);
+    done();
+
+  }
+
+}
+
+
+/* =========================================================
+   COMPOSER
+========================================================= */
+
+function msgInputKeydown(e){
+
+  if(e.key === "Enter" && !e.shiftKey){
+    e.preventDefault();
+    sendReply();
+  }
+
+}
+
+function handleFile(e){
+
+  const file = e.target.files && e.target.files[0];
+
+  if(!file) return;
+
+  if(!file.type.startsWith("image/")){
+    alert("Please choose an image file.");
+    e.target.value = "";
+    return;
+  }
+
+  if(file.size > 8 * 1024 * 1024){
+    alert("Please choose an image under 8MB.");
+    e.target.value = "";
+    return;
+  }
+
+  pendingFile = file;
+
+  const reader = new FileReader();
+
+  reader.onload = function(ev){
+    document.getElementById("previewImg").src = ev.target.result;
+    document.getElementById("previewBar").classList.add("on");
+  };
+
+  reader.readAsDataURL(file);
+
+}
+
+function cancelImage(){
+
+  pendingFile = null;
+
+  document.getElementById("msgFile").value = "";
+  document.getElementById("previewBar").classList.remove("on");
+
+}
+
+async function sendReply(){
+
+  if(!selectedUid){
+    alert("Select a conversation first.");
+    return;
+  }
+
+  const input = document.getElementById("msgInput");
+  const text = input.value.trim();
+  const file = pendingFile;
+
+  if(!text && !file) return;
+
+  if(sending) return;
+
+  sending = true;
+
+  const btn = document.getElementById("sendBtn");
+  btn.disabled = true;
+
+  try{
+
+    let imageUrl = null;
+
+    if(file){
+
+      imageUrl = await uploadImageToCloudinary(file);
+
+    }
+
+    await db.collection("chats").doc(selectedUid).collection("messages").add({
+      sender: "admin",
+      text: text || null,
+      imageUrl: imageUrl,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    const preview = imageUrl ? (text ? "📷 " + text : "📷 Photo") : text;
+
+    await db.collection("chats").doc(selectedUid).set({
+      lastMessage: preview,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      unreadUser: firebase.firestore.FieldValue.increment(1)
+    },{merge:true});
+
+    input.value = "";
+    cancelImage();
+
+  }
+  catch(error){
+
+    console.error(error);
+    alert("Message could not be sent. Please check your connection and try again.");
+
+  }
+  finally{
+
+    sending = false;
+    btn.disabled = false;
+
+  }
+
+}
+
+
+/* =========================================================
+   ENTER KEY LOGIN
+========================================================= */
+
+document.getElementById("adminPassword").addEventListener("keydown",function(e){
+  if(e.key === "Enter"){ adminSignIn(); }
+});
+
+</script>
+
+</body>
+</html>
